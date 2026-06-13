@@ -108,3 +108,9 @@ curl -X POST http://127.0.0.1:8765/api/sync
 ```
 
 默认每天 10:30 运行 `./scripts/publish_github_pages.sh --sync`，日志写入 `data/logs/pages-sync.*.log`。脚本不会提交本地 SQLite、原始封面缓存、日志、浏览器资料或 `.env`。
+
+安装后不会立刻触发同步；需要立刻跑一次时使用：
+
+```bash
+./scripts/install_pages_sync_launch_agent.sh --run-now
+```
