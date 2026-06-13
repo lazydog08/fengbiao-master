@@ -107,7 +107,15 @@ curl -X POST http://127.0.0.1:8765/api/sync
 ./scripts/install_pages_sync_launch_agent.sh
 ```
 
-默认每天 10:30 运行 `./scripts/publish_github_pages.sh --sync`，日志写入 `data/logs/pages-sync.*.log`。脚本不会提交本地 SQLite、原始封面缓存、日志、浏览器资料或 `.env`。
+默认每天 10:30 运行每日同步任务。脚本不会提交本地 SQLite、原始封面缓存、日志、浏览器资料或 `.env`。
+
+安装脚本会准备一个本机运行副本：
+
+- 路径：`~/Library/Application Support/fengbiao-master-runtime`
+- 日志：`~/Library/Logs/fengbiao-pages-sync.*.log`
+- 定时任务每天在运行副本里先尽量 `git pull` 主分支，再抓取公开数据、导出静态快照并推送 `gh-pages`
+
+运行副本的 SQLite 是每日任务的长期数据源。首次安装会从当前工作区种一份数据库和封面；之后重装默认不覆盖运行副本数据库。确实要强制重种数据时，先确认运行副本数据可覆盖，再设置 `FENGBIAO_SEED_RUNTIME_DATA=1` 运行安装脚本。
 
 安装后不会立刻触发同步；需要立刻跑一次时使用：
 

@@ -8,6 +8,7 @@ PAGES_BRANCH="${FENGBIAO_PAGES_BRANCH:-gh-pages}"
 COVER_MAX_PX="${FENGBIAO_COVER_MAX_PX:-640}"
 COVER_JPEG_QUALITY="${FENGBIAO_COVER_JPEG_QUALITY:-72}"
 RUN_SYNC=0
+SYNC_RC=0
 export GIT_TERMINAL_PROMPT=0
 
 usage() {
@@ -55,6 +56,7 @@ if [[ "$RUN_SYNC" -eq 1 ]]; then
   set +e
   sync_output="$(PYTHONPATH=src "$PYTHON_BIN" -m fengbiao.cli daily-run 2>&1)"
   sync_rc=$?
+  SYNC_RC="$sync_rc"
   set -e
   printf '%s\n' "$sync_output"
   if [[ "$sync_rc" -ne 0 ]]; then
@@ -108,3 +110,4 @@ fi
 
 echo "published_base=${PAGES_BASE}"
 echo "published_branch=${PAGES_BRANCH}"
+exit "$SYNC_RC"

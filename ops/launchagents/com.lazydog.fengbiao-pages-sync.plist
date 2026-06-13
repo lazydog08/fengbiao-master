@@ -8,7 +8,7 @@
   <array>
     <string>/bin/zsh</string>
     <string>-lc</string>
-    <string>cd /Volumes/CodexT7/workspaces/封标大师 &amp;&amp; ./scripts/publish_github_pages.sh --sync</string>
+    <string>cd "$HOME/Library/Application Support/fengbiao-master-runtime" &amp;&amp; bash ./scripts/run_pages_sync_job.sh</string>
   </array>
   <key>EnvironmentVariables</key>
   <dict>
@@ -25,10 +25,8 @@
     <integer>30</integer>
   </dict>
   <key>StandardOutPath</key>
-  <string>/Volumes/CodexT7/workspaces/封标大师/data/logs/pages-sync.out.log</string>
+  <string>/Users/lazydog/Library/Logs/fengbiao-pages-sync.out.log</string>
   <key>StandardErrorPath</key>
-  <string>/Volumes/CodexT7/workspaces/封标大师/data/logs/pages-sync.err.log</string>
-  <key>WorkingDirectory</key>
-  <string>/Volumes/CodexT7/workspaces/封标大师</string>
+  <string>/Users/lazydog/Library/Logs/fengbiao-pages-sync.err.log</string>
 </dict>
 </plist>
