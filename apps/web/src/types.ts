@@ -5,7 +5,7 @@ export type PerformanceBucketId = "high" | "steady" | "low" | "unknown";
 export interface CreatorInfo {
   name: string;
   tags: string[];
-  note: string;
+  note?: string;
 }
 
 export interface SampleMetrics {
@@ -20,7 +20,7 @@ export interface SampleMetrics {
 export interface CoverInfo {
   url: string | null;
   path?: string | null;
-  sourceUrl: string | null;
+  sourceUrl?: string | null;
 }
 
 export interface SampleCardInfo {

@@ -68,6 +68,8 @@ describe("loadSnapshot", () => {
 
   it("keeps static assets under the configured Vite base path", () => {
     expect(withBasePath("/covers/1.jpg")).toBe("/covers/1.jpg");
+    expect(withBasePath("/covers/1.jpg", "/fengbiao-master/")).toBe("/fengbiao-master/covers/1.jpg");
+    expect(withBasePath("/fengbiao-snapshot.json", "/fengbiao-master")).toBe("/fengbiao-master/fengbiao-snapshot.json");
     expect(withBasePath("https://example.com/cover.jpg")).toBe("https://example.com/cover.jpg");
   });
 });

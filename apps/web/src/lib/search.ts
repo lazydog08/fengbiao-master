@@ -294,7 +294,7 @@ function sampleFields(sample: Sample, videoType: string): WeightedField[] {
     [sample.creator.name, FIELD_WEIGHTS.creator],
     [sample.platform, FIELD_WEIGHTS.platform],
     [sample.creator.tags.join(" "), FIELD_WEIGHTS.tags],
-    [sample.creator.note, FIELD_WEIGHTS.note],
+    [sample.creator.note ?? "", FIELD_WEIGHTS.note],
     [sample.card.track, FIELD_WEIGHTS.track],
     [sample.card.humanNote, FIELD_WEIGHTS.humanNote],
     [bucket.label, FIELD_WEIGHTS.bucket],

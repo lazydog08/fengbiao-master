@@ -8,6 +8,7 @@ PAGES_BRANCH="${FENGBIAO_PAGES_BRANCH:-gh-pages}"
 COVER_MAX_PX="${FENGBIAO_COVER_MAX_PX:-640}"
 COVER_JPEG_QUALITY="${FENGBIAO_COVER_JPEG_QUALITY:-72}"
 RUN_SYNC=0
+export GIT_TERMINAL_PROMPT=0
 
 usage() {
   printf 'Usage: %s [--sync]\n' "$(basename "$0")"
@@ -51,7 +52,14 @@ if [[ "$worktree_real" == "$root_real" || "$worktree_real" == "$root_real"/* ]];
 fi
 
 if [[ "$RUN_SYNC" -eq 1 ]]; then
-  PYTHONPATH=src "$PYTHON_BIN" -m fengbiao.cli daily-run
+  set +e
+  sync_output="$(PYTHONPATH=src "$PYTHON_BIN" -m fengbiao.cli daily-run 2>&1)"
+  sync_rc=$?
+  set -e
+  printf '%s\n' "$sync_output"
+  if [[ "$sync_rc" -ne 0 ]]; then
+    echo "daily-run exited with ${sync_rc}; continuing to export and publish the latest local database snapshot" >&2
+  fi
 fi
 
 "$PYTHON_BIN" scripts/export_frontend_snapshot.py --cover-max-px "$COVER_MAX_PX" --cover-jpeg-quality "$COVER_JPEG_QUALITY"

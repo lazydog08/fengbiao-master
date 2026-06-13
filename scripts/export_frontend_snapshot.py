@@ -139,7 +139,7 @@ def _row_to_sample(root: Path, covers_public: Path, row: sqlite3.Row, cover_max_
         "creator": {
             "name": row["creator_name"],
             "tags": tags,
-            "note": row["creator_note"] or "",
+            "note": "",
         },
         "videoId": row["platform_video_id"],
         "title": row["title"],
@@ -157,13 +157,11 @@ def _row_to_sample(root: Path, covers_public: Path, row: sqlite3.Row, cover_max_
         },
         "cover": {
             "url": cover_url,
-            "path": row["cover_path"],
-            "sourceUrl": row["cover_source_url"],
         },
         "card": {
-            "track": row["track"] or "",
-            "humanNote": row["human_note"] or "",
-            "status": row["status"] or "",
+            "track": "",
+            "humanNote": "",
+            "status": "",
             "baselinePlayCount": _nullable_float(metrics.get("baseline_play_count")),
             "relativeToBaseline": _nullable_float(metrics.get("relative_to_baseline")),
             "viewsPerFollower": _nullable_float(metrics.get("views_per_follower")),

@@ -127,8 +127,14 @@ class FrontendSnapshotExportTests(unittest.TestCase):
             self.assertIsNone(first["metrics"]["playCount"])
             second = payload["samples"][1]
             self.assertEqual(second["creator"]["tags"], ["科技评测", "智能眼镜"])
+            self.assertEqual(second["creator"]["note"], "")
+            self.assertEqual(second["card"]["track"], "")
+            self.assertEqual(second["card"]["humanNote"], "")
+            self.assertEqual(second["card"]["status"], "")
             self.assertEqual(second["card"]["relativeToBaseline"], 2.5)
             self.assertEqual(second["cover"]["url"], f"/covers/{video_id}.jpg")
+            self.assertNotIn("path", second["cover"])
+            self.assertNotIn("sourceUrl", second["cover"])
             self.assertTrue((public_covers_dir / f"{video_id}.jpg").exists())
 
     def test_exports_with_malformed_json_and_missing_cover(self):

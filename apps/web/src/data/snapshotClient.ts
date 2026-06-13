@@ -31,12 +31,11 @@ export async function loadSnapshot(fetcher: SnapshotFetcher = fetch, options: Lo
   return { payload, source: "static" };
 }
 
-export function withBasePath(path: string): string {
+export function withBasePath(path: string, basePath: string = import.meta.env.BASE_URL || "/"): string {
   if (/^(https?:)?\/\//.test(path) || path.startsWith("data:") || path.startsWith("blob:")) {
     return path;
   }
-  const base = import.meta.env.BASE_URL || "/";
-  const normalizedBase = base.endsWith("/") ? base : `${base}/`;
+  const normalizedBase = basePath.endsWith("/") ? basePath : `${basePath}/`;
   const normalizedPath = path.replace(/^\/+/, "");
   return `${normalizedBase}${normalizedPath}`;
 }
