@@ -18,11 +18,19 @@ __pycache__/
 .venv/
 venv/
 node_modules/
+.reviews/
 dist/
 build/
 
 data/raw/
+data/db/
+data/backups/
+data/covers/
+data/logs/
 data/private/
 data/secrets/
 outputs/
 tmp/
+
+apps/web/public/covers/
+apps/web/public/fengbiao-snapshot.json

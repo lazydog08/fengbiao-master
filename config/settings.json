@@ -1,0 +1,35 @@
+{
+  "http": {
+    "timeout_sec": 20,
+    "min_interval_sec": 1.0,
+    "max_retries": 2
+  },
+  "ingest": {
+    "default_max_recent": 6,
+    "daily_recent": 5
+  },
+  "backfill": {
+    "years": 3,
+    "bili_page_size": 30,
+    "bili_page_interval_sec": 2.0,
+    "bili_ytdlp_fallback": true,
+    "bili_ytdlp_path": "yt-dlp",
+    "bili_ytdlp_timeout_sec": 900,
+    "bili_ytdlp_playlist_end": 1200,
+    "bili_detail_interval_sec": 0.5,
+    "ytdlp_path": "yt-dlp",
+    "ytdlp_enabled": true,
+    "ytdlp_timeout_sec": 3600,
+    "youtube_flat_playlist_end": 2000,
+    "youtube_detail_timeout_sec": 20,
+    "youtube_detail_interval_sec": 0.25
+  },
+  "cover_filters": {
+    "reject_dimensions": [[480, 360]]
+  },
+  "paths": {
+    "db": "data/db/fengbiao.sqlite3",
+    "covers": "data/covers",
+    "logs": "data/logs"
+  }
+}

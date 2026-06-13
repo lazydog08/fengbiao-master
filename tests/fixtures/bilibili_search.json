@@ -1,0 +1,39 @@
+{
+  "code": 0,
+  "message": "OK",
+  "data": {
+    "result": [
+      {
+        "mid": 946974,
+        "uname": "影视飓风",
+        "fans": 16400000,
+        "videos": 992,
+        "upic": "//i2.hdslb.com/bfs/face/avatar.jpg",
+        "res": [
+          {
+            "bvid": "BV1RLE16eEX5",
+            "title": "动态视频｜下一个来影视飓风上班的是谁？",
+            "pubdate": 1781319600,
+            "pic": "//i0.hdslb.com/bfs/archive/cover1.jpg",
+            "play": "161937",
+            "dm": 189,
+            "coin": 1588,
+            "fav": 1114,
+            "arcurl": "http://www.bilibili.com/video/BV1RLE16eEX5"
+          },
+          {
+            "bvid": "BV16kEC6MEWL",
+            "title": "新地图解锁！影视飓风的电竞房？",
+            "pubdate": 1781254800,
+            "pic": "//i2.hdslb.com/bfs/archive/cover2.jpg",
+            "play": "1108995",
+            "dm": 10542,
+            "coin": 69601,
+            "fav": 35054,
+            "arcurl": "http://www.bilibili.com/video/BV16kEC6MEWL"
+          }
+        ]
+      }
+    ]
+  }
+}

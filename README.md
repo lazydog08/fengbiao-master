@@ -43,3 +43,68 @@ tests/
 ## 后续
 
 第一期优先做“采集 + 入库 + 相对表现计算 + 样本卡参考墙”。模型训练、OCR、复杂视觉特征和建议引擎等样本稳定后再做。
+
+## 本机前后端同步入口
+
+后端同步服务默认只监听本机：
+
+```bash
+PYTHONPATH=src python3 -m fengbiao.cli sync-server
+```
+
+前端开发服务：
+
+```bash
+cd apps/web
+npm run dev
+```
+
+前端会优先读取 `GET /api/snapshot`。同步服务运行时，这个接口会从 SQLite 导出最新快照并返回给前端；同步服务不在时，前端会回退到 `apps/web/public/fengbiao-snapshot.json`。
+
+需要让后端先跑一次日常公开数据刷新，再导出给前端时，可以调用：
+
+```bash
+curl -X POST http://127.0.0.1:8765/api/sync
+```
+
+也可以直接跑完整通道体检：
+
+```bash
+./scripts/check_channels.sh
+```
+
+它会检查本机同步 API、Vite 代理 API、静态快照回退和当前前端首页是否连通。
+
+## GitHub Pages 在线站
+
+当前线上 MVP 不引入需要密钥的云数据库；线上“数据库”是从本机 SQLite 导出的公开静态快照：
+
+- `fengbiao-snapshot.json`
+- `covers/` 里的网页轻量封面副本
+
+主分支保存代码和脚本，`gh-pages` 分支保存可公开访问的静态网站。发布命令：
+
+```bash
+./scripts/publish_github_pages.sh
+```
+
+需要在发布前先跑一次公开数据刷新时：
+
+```bash
+./scripts/publish_github_pages.sh --sync
+```
+
+发布脚本会：
+
+1. 导出前端快照；
+2. 把本地原始封面转换成较轻的网页封面副本；
+3. 按 GitHub Pages 子路径构建前端；
+4. 推送 `apps/web/dist` 到 `gh-pages` 分支。
+
+本机每日同步可安装 LaunchAgent：
+
+```bash
+./scripts/install_pages_sync_launch_agent.sh
+```
+
+默认每天 10:30 运行 `./scripts/publish_github_pages.sh --sync`，日志写入 `data/logs/pages-sync.*.log`。脚本不会提交本地 SQLite、原始封面缓存、日志、浏览器资料或 `.env`。

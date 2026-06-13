@@ -1,0 +1,26 @@
+{
+  "creators": [
+    {"platform": "bilibili", "name": "影视飓风", "bili_mid": "946974", "tags": ["影像", "科技", "制作"], "note": "高制作规格与强视觉封面参考"},
+    {"platform": "bilibili", "name": "LKS", "bili_mid": "125526", "tags": ["知识", "泛科技", "叙事"], "note": "强标题钩子与知识包装参考"},
+    {"platform": "bilibili", "name": "懒狗小黑", "bili_mid": "516185777", "tags": ["科技评测", "生活方式", "自有账号"], "note": "自有账号基线样本"},
+    {"platform": "bilibili", "name": "林捂捂", "bili_mid": "276928941", "tags": ["生活方式", "数码"], "note": ""},
+    {"platform": "bilibili", "name": "王波粒", "bili_mid": "174922880", "tags": ["科技", "消费决策"], "note": ""},
+    {"platform": "bilibili", "name": "贪玩歌姬小宁子", "bili_mid": "27899754", "tags": ["娱乐", "人物", "情绪"], "note": ""},
+    {"platform": "bilibili", "name": "六分超超", "bili_mid": "652137183", "tags": ["科技", "表达"], "note": ""},
+    {"platform": "bilibili", "name": "橙红 iris", "bili_mid": "19226160", "tags": ["生活方式", "视觉"], "note": ""},
+    {"platform": "bilibili", "name": "极客湾", "bili_mid": "25876945", "tags": ["数码科技", "硬件评测"], "note": "技术密度高的评测封标参考"},
+    {"platform": "bilibili", "name": "Linksphotograph", "bili_mid": "3816626", "tags": ["摄影", "影像", "视觉"], "note": ""},
+    {"platform": "bilibili", "name": "那个牧之", "bili_mid": "285108459", "tags": ["科技", "观点"], "note": ""},
+    {"platform": "bilibili", "name": "爱玩的建钢", "bili_mid": "17403264", "tags": ["数码", "体验"], "note": ""},
+    {"platform": "bilibili", "name": "于可音", "bili_mid": "1604499246", "tags": ["生活方式", "人物"], "note": ""},
+    {"platform": "bilibili", "name": "花生説", "bili_mid": "25480023", "tags": ["科技", "观点"], "note": ""},
+    {"platform": "bilibili", "name": "陈抱一", "bili_mid": "3530725", "tags": ["科技", "知识"], "note": ""},
+    {"platform": "bilibili", "name": "先看评测", "bili_mid": "483311105", "tags": ["数码科技", "评测"], "note": "评测类封标参考"},
+    {"platform": "bilibili", "name": "老师好我叫何同学", "bili_mid": "163637592", "tags": ["科技", "叙事", "高概念"], "note": "强选题和高概念包装参考"},
+    {"platform": "bilibili", "name": "钟文泽", "bili_mid": "25910292", "tags": ["数码科技", "评测", "消费决策"], "note": "科技评测主参考"},
+    {"platform": "youtube", "name": "MKBHD", "yt_channel_id": "UCBJycsmduvYEL83R_U4JriQ", "tags": ["tech", "review", "thumbnail"], "note": "clean tech thumbnail system", "landscape_only": true, "min_cover_aspect_ratio": 1.6},
+    {"platform": "youtube", "name": "Mrwhosetheboss", "yt_channel_id": "UCMiJRAwDNSNzuYeN2uWa0pA", "tags": ["tech", "review", "thumbnail"], "note": "high-contrast packaging and clear stakes", "landscape_only": true, "min_cover_aspect_ratio": 1.6},
+    {"platform": "youtube", "name": "Dave2D", "yt_channel_id": "UCVYamHliCI9rw1tHR1xbkfw", "tags": ["tech", "review", "thumbnail"], "note": "minimal composition and product clarity", "landscape_only": true, "min_cover_aspect_ratio": 1.6},
+    {"platform": "youtube", "name": "Linus Tech Tips", "yt_channel_id": "UCXuqSBlHAE6Xw-yeJA0Tunw", "tags": ["tech", "hardware", "thumbnail"], "note": "large-scale tech packaging reference", "landscape_only": true, "min_cover_aspect_ratio": 1.6}
+  ]
+}

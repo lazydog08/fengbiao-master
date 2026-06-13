@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns:media="http://search.yahoo.com/mrss/" xmlns="http://www.w3.org/2005/Atom">
+  <title>Marques Brownlee</title>
+  <entry>
+    <yt:videoId>_gCXmKjDecU</yt:videoId>
+    <yt:channelId>UCBJycsmduvYEL83R_U4JriQ</yt:channelId>
+    <title>WWDC 2026 Impressions: Yeah, That's About Right</title>
+    <link rel="alternate" href="https://www.youtube.com/watch?v=_gCXmKjDecU"/>
+    <published>2026-06-09T05:48:41+00:00</published>
+    <media:group>
+      <media:thumbnail url="https://i4.ytimg.com/vi/_gCXmKjDecU/hqdefault.jpg" width="480" height="360"/>
+      <media:community>
+        <media:statistics views="3583048"/>
+      </media:community>
+    </media:group>
+  </entry>
+</feed>
