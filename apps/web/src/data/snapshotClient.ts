@@ -13,16 +13,22 @@ export interface SnapshotResult {
 
 export interface LoadSnapshotOptions {
   forceExport?: boolean;
+  preferApi?: boolean;
 }
 
 export async function loadSnapshot(fetcher: SnapshotFetcher = fetch, options: LoadSnapshotOptions = {}): Promise<SnapshotResult> {
-  try {
-    const payload = await fetchSnapshot(fetcher, options.forceExport ? `${API_SNAPSHOT_PATH}?export=1` : API_SNAPSHOT_PATH);
-    return { payload, source: "api" };
-  } catch {
-    const payload = await fetchSnapshot(fetcher, withBasePath(STATIC_SNAPSHOT_PATH));
-    return { payload, source: "static" };
+  const preferApi = options.preferApi ?? isLocalBrowser();
+  if (preferApi) {
+    try {
+      const payload = await fetchSnapshot(fetcher, options.forceExport ? `${API_SNAPSHOT_PATH}?export=1` : API_SNAPSHOT_PATH);
+      return { payload, source: "api" };
+    } catch {
+      // Fall through to the static snapshot. This is the expected path on
+      // GitHub Pages and any environment without the local sync server.
+    }
   }
+  const payload = await fetchSnapshot(fetcher, withBasePath(STATIC_SNAPSHOT_PATH));
+  return { payload, source: "static" };
 }
 
 export function withBasePath(path: string): string {
@@ -33,6 +39,13 @@ export function withBasePath(path: string): string {
   const normalizedBase = base.endsWith("/") ? base : `${base}/`;
   const normalizedPath = path.replace(/^\/+/, "");
   return `${normalizedBase}${normalizedPath}`;
+}
+
+function isLocalBrowser(): boolean {
+  if (typeof window === "undefined") {
+    return true;
+  }
+  return ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 }
 
 async function fetchSnapshot(fetcher: SnapshotFetcher, path: string): Promise<SnapshotPayload> {

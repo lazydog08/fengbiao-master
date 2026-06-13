@@ -54,6 +54,18 @@ describe("loadSnapshot", () => {
     expect(fetcher).toHaveBeenCalledWith("/api/snapshot?export=1", { cache: "no-store" });
   });
 
+  it("can skip the local backend for static hosting", async () => {
+    const staticPayload = payload("2026-06-13T04:00:00+00:00");
+    const fetcher = vi.fn().mockResolvedValueOnce(jsonResponse(staticPayload));
+
+    const result = await loadSnapshot(fetcher, { preferApi: false });
+
+    expect(result.source).toBe("static");
+    expect(result.payload).toBe(staticPayload);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(fetcher).toHaveBeenCalledWith("/fengbiao-snapshot.json", { cache: "no-store" });
+  });
+
   it("keeps static assets under the configured Vite base path", () => {
     expect(withBasePath("/covers/1.jpg")).toBe("/covers/1.jpg");
     expect(withBasePath("https://example.com/cover.jpg")).toBe("https://example.com/cover.jpg");
