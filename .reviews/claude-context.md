@@ -16,7 +16,7 @@ You are a read-only planner. Do not modify files, run commands, deploy, or ask f
 
 ## Product Goal
 
-Build a local tool that tracks selected Bilibili creators, regularly collects their new videos' public thumbnail/title/performance data, stores it as a "封标知识库", and later uses the knowledge base to provide practical thumbnail and title suggestions for new video topics.
+Build a local tool that tracks Xiaohei's own historical Bilibili videos plus selected benchmark creators, regularly collects their public thumbnail/title/performance data, stores it as a "封标知识库", and later uses grounded historical sample cards to provide practical thumbnail and title suggestions for new video topics.
 
 ## Hard Constraints
 
@@ -33,19 +33,20 @@ Design an MVP that can:
 
 1. Read a creator config file.
 2. Fetch recent public videos for each configured creator.
-3. Store video identity, title, cover URL, publish time, creator, and play-count snapshots.
+3. Store video identity, title, cover URL, publish time, creator, creator follower count, and play-count snapshots.
 4. Cache cover images safely.
-5. Produce a simple report showing which videos grew fastest and what their title/cover patterns look like.
+5. Detect title/cover changes across snapshots.
+6. Produce sample cards and a simple report showing which videos overperformed each creator's own baseline, which videos grew fastest in the first 48 hours, and what their title/cover hooks look like.
 
 ## Future Direction
 
 Later versions should support:
 
-- OCR on cover images.
-- Visual feature extraction for cover layout, subject, colors, and text.
 - Title pattern classification.
+- Same-topic comparison between overperforming and underperforming samples.
 - Semantic search over past cases.
 - LLM-assisted suggestions for a new topic, grounded in retrieved historical examples.
+- OCR and visual feature extraction after the first sample-card workflow is stable.
 
 ## Requested Output
 
@@ -61,4 +62,4 @@ Write a Chinese plan with:
 8. Risks and compliance notes.
 9. Concrete next steps for Codex.
 
-Keep the plan practical. Prefer a small reliable MVP before any model training.
+Keep the plan practical. Prefer a small reliable sample-card MVP before any model training, OCR, or visual feature extraction. Do not treat absolute play count as a direct proxy for thumbnail/title quality.
