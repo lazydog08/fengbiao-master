@@ -34,7 +34,8 @@ SELECT
   sc.track,
   sc.human_note,
   sc.status,
-  sc.metrics_json
+  sc.metrics_json,
+  sc.analysis_json
 FROM videos v
 JOIN creators c ON c.id = v.creator_id
 LEFT JOIN (
@@ -83,6 +84,7 @@ def export_snapshot(
     try:
         with sqlite3.connect(db) as conn:
             conn.row_factory = sqlite3.Row
+            _ensure_analysis_column(conn)
             rows = conn.execute(QUERY).fetchall()
             counts = {
                 "creators": _count(conn, "creators"),
@@ -129,9 +131,18 @@ def _count(conn: sqlite3.Connection, table: str) -> int:
     return int(row["count"])
 
 
+def _ensure_analysis_column(conn: sqlite3.Connection) -> None:
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(sample_cards)").fetchall()}
+    if "analysis_json" not in columns:
+        # Export is sometimes run directly without a prior ingest/init step.
+        # Keep the static snapshot path compatible with older local databases.
+        conn.execute("ALTER TABLE sample_cards ADD COLUMN analysis_json TEXT")
+
+
 def _row_to_sample(root: Path, covers_public: Path, row: sqlite3.Row, cover_max_px: int, cover_jpeg_quality: int) -> dict[str, Any]:
     tags = _json_list(row["tags"])
     metrics = _json_object(row["metrics_json"])
+    analysis = _json_object(row["analysis_json"]) if row["analysis_json"] else None
     cover_url = _publish_cover(root, covers_public, int(row["id"]), row["cover_path"], cover_max_px, cover_jpeg_quality)
     return {
         "id": int(row["id"]),
@@ -166,6 +177,7 @@ def _row_to_sample(root: Path, covers_public: Path, row: sqlite3.Row, cover_max_
             "relativeToBaseline": _nullable_float(metrics.get("relative_to_baseline")),
             "viewsPerFollower": _nullable_float(metrics.get("views_per_follower")),
         },
+        "analysis": analysis if analysis else None,
     }
 
 

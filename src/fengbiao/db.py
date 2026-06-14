@@ -6,6 +6,8 @@ import sqlite3
 from pathlib import Path
 from typing import Any, Iterator
 
+from fengbiao.analysis import analyze_sample
+from fengbiao.fetch.covers import image_dimensions
 from fengbiao.metrics import compute_relative_metrics
 from fengbiao.models import Creator, Video
 
@@ -32,6 +34,7 @@ class Database:
         with self.connect() as conn:
             conn.executescript(SCHEMA)
             _migrate_cover_assets_unique_key(conn)
+            _migrate_sample_cards_analysis(conn)
 
     def upsert_creator(self, creator: Creator) -> int:
         with self.connect() as conn:
@@ -211,22 +214,52 @@ class Database:
             for creator in creators:
                 rows = conn.execute(
                     """
-                    SELECT v.id AS video_id, s.play_count
+                    SELECT
+                      v.id AS video_id,
+                      v.title,
+                      v.current_cover_id,
+                      s.play_count,
+                      ca.local_path AS cover_path,
+                      sc.metrics_json AS existing_metrics_json,
+                      EXISTS(
+                        SELECT 1 FROM change_log cl
+                        WHERE cl.video_id=v.id AND cl.field='cover'
+                      ) AS cover_changed,
+                      EXISTS(
+                        SELECT 1 FROM change_log cl
+                        WHERE cl.video_id=v.id AND cl.field='title'
+                      ) AS title_changed
                     FROM videos v
                     LEFT JOIN (
                         SELECT video_id, MAX(id) AS snapshot_id FROM video_snapshots GROUP BY video_id
                     ) latest ON latest.video_id=v.id
                     LEFT JOIN video_snapshots s ON s.id=latest.snapshot_id
-                    WHERE v.creator_id=? AND s.play_count IS NOT NULL
+                    LEFT JOIN cover_assets ca ON ca.id=v.current_cover_id
+                    LEFT JOIN sample_cards sc ON sc.video_id=v.id
+                    WHERE v.creator_id=?
                     """,
                     (creator["id"],),
                 ).fetchall()
                 counts = [int(row["play_count"]) for row in rows if row["play_count"] is not None]
                 for row in rows:
-                    metrics = compute_relative_metrics(row["play_count"], counts, creator["follower_count"])
+                    computed_metrics = compute_relative_metrics(row["play_count"], counts, creator["follower_count"])
+                    metrics = _metrics_for_latest_snapshot(row["play_count"], row["existing_metrics_json"], computed_metrics)
+                    analysis_json = None
+                    try:
+                        analysis = analyze_sample(
+                            title=row["title"],
+                            cover_dimensions=_cover_dimensions(row["cover_path"]),
+                            cover_changed=bool(row["cover_changed"]),
+                            title_changed=bool(row["title_changed"]),
+                            relative_to_baseline=metrics["relative_to_baseline"],
+                            sample_size=len(counts),
+                        )
+                        analysis_json = json.dumps(analysis, ensure_ascii=False)
+                    except Exception:  # noqa: BLE001 - metrics refresh must survive analysis failures.
+                        analysis_json = None
                     conn.execute(
-                        "UPDATE sample_cards SET metrics_json=? WHERE video_id=?",
-                        (json.dumps(metrics, ensure_ascii=False), row["video_id"]),
+                        "UPDATE sample_cards SET metrics_json=?, analysis_json=? WHERE video_id=?",
+                        (json.dumps(metrics, ensure_ascii=False), analysis_json, row["video_id"]),
                     )
 
     def count(self, table: str) -> int:
@@ -314,6 +347,7 @@ CREATE TABLE IF NOT EXISTS sample_cards(
   human_note TEXT,
   status TEXT NOT NULL DEFAULT 'auto',
   metrics_json TEXT,
+  analysis_json TEXT,
   updated_at TEXT NOT NULL
 );
 
@@ -360,3 +394,52 @@ def _migrate_cover_assets_unique_key(conn: sqlite3.Connection) -> None:
         """
     )
     conn.execute("DROP TABLE cover_assets_old")
+
+
+def _migrate_sample_cards_analysis(conn: sqlite3.Connection) -> None:
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(sample_cards)").fetchall()}
+    if "analysis_json" not in columns:
+        conn.execute("ALTER TABLE sample_cards ADD COLUMN analysis_json TEXT")
+
+
+def _cover_dimensions(path: str | None) -> tuple[int, int] | None:
+    if not path:
+        return None
+    try:
+        source = Path(path)
+        if not source.exists() or not source.is_file():
+            return None
+        return image_dimensions(source)
+    except Exception:  # noqa: BLE001 - missing/corrupt cover files should not break metrics.
+        return None
+
+
+def _metrics_for_latest_snapshot(
+    play_count: int | None,
+    existing_metrics_json: str | None,
+    computed_metrics: dict[str, float | None],
+) -> dict[str, float | None]:
+    if play_count is not None:
+        return computed_metrics
+    existing = _json_object(existing_metrics_json)
+    if existing:
+        return {
+            "baseline_play_count": _nullable_float(existing.get("baseline_play_count")),
+            "relative_to_baseline": _nullable_float(existing.get("relative_to_baseline")),
+            "views_per_follower": _nullable_float(existing.get("views_per_follower")),
+        }
+    return computed_metrics
+
+
+def _json_object(raw: str | None) -> dict[str, Any]:
+    if not raw:
+        return {}
+    try:
+        parsed = json.loads(raw)
+    except json.JSONDecodeError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _nullable_float(value: Any) -> float | None:
+    return float(value) if value is not None else None

@@ -12,7 +12,7 @@ from fengbiao.db import Database
 from fengbiao.fetch.bilibili import fetch_user_search
 from fengbiao.fetch.bilibili_space import BilibiliRiskControlError, fetch_space_archives
 from fengbiao.fetch.bilibili_ytdlp import fetch_space_archives_via_ytdlp
-from fengbiao.fetch.covers import cache_cover, image_dimensions
+from fengbiao.fetch.covers import cache_cover, image_dimensions, is_below_min_aspect_ratio
 from fengbiao.fetch.youtube import fetch_feed
 from fengbiao.fetch.youtube_ytdlp import fetch_channel_videos
 from fengbiao.models import Creator, Video
@@ -52,7 +52,7 @@ def ingest_all(
             creator, videos, source_url = fetch_creator(config, settings, max_recent)
             db.upsert_creator(creator)
             summary["creators_checked"] += 1
-            _persist_videos(db, creator, videos, source_url, settings, cache_covers, summary)
+            _persist_videos(db, creator, videos, source_url, config, settings, cache_covers, summary)
         except Exception as exc:  # noqa: BLE001 - per-creator isolation is the point here.
             summary["errors"].append({"creator": config.name, "platform": config.platform, "error": str(exc)})
         finally:
@@ -108,7 +108,7 @@ def backfill_all(
             creator, videos, source_url = fetch_backfill_creator(config, settings, cutoff)
             db.upsert_creator(creator)
             summary["creators_checked"] += 1
-            _persist_videos(db, creator, videos, source_url, settings, cache_covers, summary)
+            _persist_videos(db, creator, videos, source_url, config, settings, cache_covers, summary)
         except SkipCreator as skipped:
             summary["skipped"].append({"creator": config.name, "platform": config.platform, "reason": str(skipped)})
         except Exception as exc:  # noqa: BLE001 - per-creator isolation is intentional.
@@ -249,6 +249,7 @@ def _persist_videos(
     creator: Creator,
     videos: list[Video],
     source_url: str,
+    config: CreatorConfig,
     settings: dict[str, Any],
     cache_covers: bool,
     summary: dict[str, Any],
@@ -283,6 +284,19 @@ def _persist_videos(
                             "video": video.platform_video_id,
                             "stage": "cover_filter",
                             "reason": "rejected_cover_dimensions",
+                            "dimensions": f"{dimensions[0]}x{dimensions[1]}",
+                        }
+                    )
+                    continue
+                if config.landscape_only and is_below_min_aspect_ratio(local_path, config.min_cover_aspect_ratio):
+                    db.delete_videos_cascade([video_db_id])
+                    summary.setdefault("skipped", []).append(
+                        {
+                            "creator": creator.name,
+                            "platform": creator.platform,
+                            "video": video.platform_video_id,
+                            "stage": "cover_filter",
+                            "reason": "non_landscape_cover",
                             "dimensions": f"{dimensions[0]}x{dimensions[1]}",
                         }
                     )

@@ -32,6 +32,43 @@ export interface SampleCardInfo {
   viewsPerFollower: number | null;
 }
 
+export interface SampleAnalysisFeature {
+  id: string;
+  label: string;
+  present: boolean;
+}
+
+export interface SampleAnalysis {
+  version: number;
+  generated_at?: string;
+  source: string;
+  performance: {
+    bucket: PerformanceBucketId;
+    relative_to_baseline: number | null;
+    confidence: "ok" | "low" | string;
+    basis: string;
+  };
+  title: {
+    char_len: number;
+    features: SampleAnalysisFeature[];
+  };
+  cover: {
+    has_asset: boolean;
+    width: number | null;
+    height: number | null;
+    aspect_ratio: number | null;
+    orientation: "landscape" | "portrait" | "square" | "unknown" | string;
+    cover_changed: boolean;
+    title_changed: boolean;
+  };
+  explanation: {
+    structure: string;
+    features: string;
+    interpretation: string;
+  };
+  caveats: string[];
+}
+
 export interface Sample {
   id: number;
   platform: string;
@@ -45,6 +82,7 @@ export interface Sample {
   metrics: SampleMetrics;
   cover: CoverInfo;
   card: SampleCardInfo;
+  analysis?: SampleAnalysis | null;
 }
 
 export interface SnapshotPayload {

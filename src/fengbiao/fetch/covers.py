@@ -103,6 +103,10 @@ def image_dimensions(path: str | Path) -> ImageDimensions | None:
         return int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
     if data.startswith(b"\xff\xd8"):
         return _jpeg_dimensions(data)
+    if data.startswith(b"GIF8") and len(data) >= 10:
+        return int.from_bytes(data[6:8], "little"), int.from_bytes(data[8:10], "little")
+    if data.startswith(b"RIFF") and len(data) >= 12 and data[8:12] == b"WEBP":
+        return _webp_dimensions(data)
     return None
 
 
@@ -112,6 +116,16 @@ def is_rejected_cover_dimensions(path: str | Path, reject_dimensions: list[list[
         return False
     rejected = {(int(width), int(height)) for width, height in reject_dimensions}
     return dimensions in rejected
+
+
+def is_below_min_aspect_ratio(path: str | Path, min_aspect_ratio: float) -> bool:
+    dimensions = image_dimensions(path)
+    if dimensions is None:
+        return False
+    width, height = dimensions
+    if height <= 0:
+        return False
+    return (width / height) < float(min_aspect_ratio)
 
 
 def _jpeg_dimensions(data: bytes) -> ImageDimensions | None:
@@ -154,6 +168,35 @@ def _jpeg_dimensions(data: bytes) -> ImageDimensions | None:
             width = int.from_bytes(segment[5:7], "big")
             return width, height
         offset += segment_length
+    return None
+
+
+def _webp_dimensions(data: bytes) -> ImageDimensions | None:
+    offset = 12
+    while offset + 8 <= len(data):
+        chunk_type = data[offset : offset + 4]
+        chunk_size = int.from_bytes(data[offset + 4 : offset + 8], "little")
+        chunk_start = offset + 8
+        chunk_end = chunk_start + chunk_size
+        if chunk_end > len(data):
+            return None
+        if chunk_type == b"VP8X" and chunk_size >= 10:
+            width = int.from_bytes(data[chunk_start + 4 : chunk_start + 7], "little") + 1
+            height = int.from_bytes(data[chunk_start + 7 : chunk_start + 10], "little") + 1
+            return width, height
+        if chunk_type == b"VP8L" and chunk_size >= 5 and data[chunk_start] == 0x2F:
+            b0, b1, b2, b3 = data[chunk_start + 1 : chunk_start + 5]
+            width = 1 + (((b1 & 0x3F) << 8) | b0)
+            height = 1 + (((b3 & 0x0F) << 10) | (b2 << 2) | ((b1 & 0xC0) >> 6))
+            return width, height
+        if chunk_type == b"VP8 " and chunk_size >= 10:
+            frame = data[chunk_start:chunk_end]
+            marker = frame.find(b"\x9d\x01\x2a")
+            if marker >= 0 and marker + 7 <= len(frame):
+                width = int.from_bytes(frame[marker + 3 : marker + 5], "little") & 0x3FFF
+                height = int.from_bytes(frame[marker + 5 : marker + 7], "little") & 0x3FFF
+                return width, height
+        offset = chunk_end + (chunk_size % 2)
     return None
 
 

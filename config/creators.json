@@ -1,6 +1,7 @@
 {
   "creators": [
     {"platform": "bilibili", "name": "影视飓风", "bili_mid": "946974", "tags": ["影像", "科技", "制作"], "note": "高制作规格与强视觉封面参考"},
+    {"platform": "bilibili", "name": "飓多多StormCrew", "bili_mid": "1780480185", "tags": ["娱乐", "挑战", "团队企划", "生活方式"], "note": "群像企划与挑战类封标参考", "landscape_only": true, "min_cover_aspect_ratio": 1.0},
     {"platform": "bilibili", "name": "LKS", "bili_mid": "125526", "tags": ["知识", "泛科技", "叙事"], "note": "强标题钩子与知识包装参考"},
     {"platform": "bilibili", "name": "懒狗小黑", "bili_mid": "516185777", "tags": ["科技评测", "生活方式", "自有账号"], "note": "自有账号基线样本"},
     {"platform": "bilibili", "name": "林捂捂", "bili_mid": "276928941", "tags": ["生活方式", "数码"], "note": ""},

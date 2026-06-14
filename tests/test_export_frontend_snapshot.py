@@ -3,10 +3,11 @@ from __future__ import annotations
 import importlib.util
 import json
 from pathlib import Path
+import sqlite3
 from tempfile import TemporaryDirectory
 import unittest
 
-from fengbiao.db import Database
+from fengbiao.db import Database, SCHEMA
 from fengbiao.models import Creator, Video
 
 
@@ -78,7 +79,7 @@ class FrontendSnapshotExportTests(unittest.TestCase):
                 conn.execute(
                     """
                     UPDATE sample_cards
-                    SET track=?, human_note=?, metrics_json=?
+                    SET track=?, human_note=?, metrics_json=?, analysis_json=?
                     WHERE video_id=?
                     """,
                     (
@@ -90,6 +91,38 @@ class FrontendSnapshotExportTests(unittest.TestCase):
                                 "relative_to_baseline": 2.5,
                                 "views_per_follower": 2.5,
                             }
+                        ),
+                        json.dumps(
+                            {
+                                "version": 1,
+                                "source": "rule",
+                                "performance": {
+                                    "bucket": "high",
+                                    "relative_to_baseline": 2.5,
+                                    "confidence": "ok",
+                                    "basis": "relative-to-creator-baseline",
+                                },
+                                "title": {
+                                    "char_len": 15,
+                                    "features": [{"id": "question", "label": "疑问句式", "present": True}],
+                                },
+                                "cover": {
+                                    "has_asset": True,
+                                    "width": 1280,
+                                    "height": 720,
+                                    "aspect_ratio": 1.778,
+                                    "orientation": "landscape",
+                                    "cover_changed": False,
+                                    "title_changed": False,
+                                },
+                                "explanation": {
+                                    "structure": "标题是疑问结构。",
+                                    "features": "特征集中在真实使用疑问。",
+                                    "interpretation": "库内表现高于基线。",
+                                },
+                                "caveats": ["本判断基于库内相对表现，不代表真实点击率。"],
+                            },
+                            ensure_ascii=False,
                         ),
                         video_id,
                     ),
@@ -125,6 +158,7 @@ class FrontendSnapshotExportTests(unittest.TestCase):
             first = payload["samples"][0]
             self.assertEqual(first["creator"]["tags"], ["tech"])
             self.assertIsNone(first["metrics"]["playCount"])
+            self.assertIsNone(first["analysis"])
             second = payload["samples"][1]
             self.assertEqual(second["creator"]["tags"], ["科技评测", "智能眼镜"])
             self.assertEqual(second["creator"]["note"], "")
@@ -132,6 +166,9 @@ class FrontendSnapshotExportTests(unittest.TestCase):
             self.assertEqual(second["card"]["humanNote"], "")
             self.assertEqual(second["card"]["status"], "")
             self.assertEqual(second["card"]["relativeToBaseline"], 2.5)
+            self.assertEqual(second["analysis"]["performance"]["bucket"], "high")
+            self.assertEqual(second["analysis"]["title"]["features"][0]["id"], "question")
+            self.assertEqual(second["analysis"]["cover"]["orientation"], "landscape")
             self.assertEqual(second["cover"]["url"], f"/covers/{video_id}.jpg")
             self.assertNotIn("path", second["cover"])
             self.assertNotIn("sourceUrl", second["cover"])
@@ -186,8 +223,57 @@ class FrontendSnapshotExportTests(unittest.TestCase):
             exported = payload["samples"][0]
             self.assertEqual(exported["creator"]["tags"], [])
             self.assertIsNone(exported["card"]["relativeToBaseline"])
+            self.assertIsNone(exported["analysis"])
             self.assertIsNone(exported["cover"]["url"])
             self.assertFalse(stale_cover.exists())
+
+    def test_export_migrates_legacy_database_without_analysis_column(self):
+        module = load_export_module()
+
+        with TemporaryDirectory() as tmp_dir:
+            root = Path(tmp_dir)
+            db_path = root / "data" / "db" / "fengbiao.sqlite3"
+            db_path.parent.mkdir(parents=True)
+            legacy_schema = SCHEMA.replace("  analysis_json TEXT,\n", "")
+            with sqlite3.connect(db_path) as conn:
+                conn.executescript(legacy_schema)
+                conn.execute(
+                    """
+                    INSERT INTO creators(id, platform, name, creator_key, tags)
+                    VALUES(1, 'bilibili', '懒狗小黑', 'xiaohei', ?)
+                    """,
+                    (json.dumps(["科技评测"], ensure_ascii=False),),
+                )
+                conn.execute(
+                    """
+                    INSERT INTO videos(id, creator_id, platform, platform_video_id, url, title, first_seen_at, last_seen_at)
+                    VALUES(1, 1, 'bilibili', 'BVLEGACY', 'https://www.bilibili.com/video/BVLEGACY', '旧库也要能导出', '2026-06-04T00:00:00+00:00', '2026-06-04T00:00:00+00:00')
+                    """
+                )
+                conn.execute(
+                    """
+                    INSERT INTO video_snapshots(video_id, fetched_at, source_url, title, cover_url, play_count)
+                    VALUES(1, '2026-06-04T00:00:00+00:00', 'source', '旧库也要能导出', 'https://example.com/legacy.jpg', 10)
+                    """
+                )
+                conn.execute("INSERT INTO sample_cards(video_id, status, updated_at) VALUES(1, 'auto', '2026-06-04T00:00:00+00:00')")
+
+            output_path = root / "apps" / "web" / "public" / "fengbiao-snapshot.json"
+            public_covers_dir = root / "apps" / "web" / "public" / "covers"
+
+            module.export_snapshot(
+                project_root=root,
+                db_path=db_path,
+                output_path=output_path,
+                public_covers_dir=public_covers_dir,
+            )
+
+            payload = json.loads(output_path.read_text(encoding="utf-8"))
+            self.assertIsNone(payload["samples"][0]["analysis"])
+            db = Database(db_path)
+            with db.connect() as conn:
+                columns = [row["name"] for row in conn.execute("PRAGMA table_info(sample_cards)").fetchall()]
+            self.assertIn("analysis_json", columns)
 
 
 if __name__ == "__main__":

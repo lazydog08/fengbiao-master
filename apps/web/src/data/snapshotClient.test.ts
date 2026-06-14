@@ -72,4 +72,106 @@ describe("loadSnapshot", () => {
     expect(withBasePath("/fengbiao-snapshot.json", "/fengbiao-master")).toBe("/fengbiao-master/fengbiao-snapshot.json");
     expect(withBasePath("https://example.com/cover.jpg")).toBe("https://example.com/cover.jpg");
   });
+
+  it("accepts samples with and without rule analysis", async () => {
+    const snapshot: SnapshotPayload = {
+      generatedAt: "2026-06-14T00:00:00+00:00",
+      counts: { creators: 1, videos: 2, samples: 2 },
+      samples: [
+        {
+          id: 1,
+          platform: "bilibili",
+          creator: { name: "懒狗小黑", tags: ["科技评测"] },
+          videoId: "BV1",
+          title: "智能眼镜这次能当主力屏幕吗？",
+          url: "https://www.bilibili.com/video/BV1",
+          publishedAt: null,
+          firstSeenAt: "2026-06-14T00:00:00+00:00",
+          lastSeenAt: "2026-06-14T00:00:00+00:00",
+          metrics: {
+            playCount: 100,
+            likeCount: null,
+            coinCount: null,
+            favoriteCount: null,
+            danmakuCount: null,
+            followerCount: null
+          },
+          cover: { url: "/covers/1.jpg" },
+          card: {
+            track: "",
+            humanNote: "",
+            status: "",
+            baselinePlayCount: 80,
+            relativeToBaseline: 1.25,
+            viewsPerFollower: null
+          },
+          analysis: {
+            version: 1,
+            generated_at: "2026-06-14T00:00:00+00:00",
+            source: "rule",
+            performance: {
+              bucket: "steady",
+              relative_to_baseline: 1.25,
+              confidence: "ok",
+              basis: "relative-to-creator-baseline"
+            },
+            title: {
+              char_len: 15,
+              features: [{ id: "question", label: "疑问句式", present: true }]
+            },
+            cover: {
+              has_asset: true,
+              width: 1280,
+              height: 720,
+              aspect_ratio: 1.778,
+              orientation: "landscape",
+              cover_changed: false,
+              title_changed: false
+            },
+            explanation: {
+              structure: "标题是疑问结构。",
+              features: "特征集中在真实使用疑问。",
+              interpretation: "库内表现接近基线。"
+            },
+            caveats: ["本判断基于库内相对表现，不代表真实点击率。"]
+          }
+        },
+        {
+          id: 2,
+          platform: "bilibili",
+          creator: { name: "懒狗小黑", tags: [] },
+          videoId: "BV2",
+          title: "普通样本",
+          url: "https://www.bilibili.com/video/BV2",
+          publishedAt: null,
+          firstSeenAt: "2026-06-14T00:00:00+00:00",
+          lastSeenAt: "2026-06-14T00:00:00+00:00",
+          metrics: {
+            playCount: null,
+            likeCount: null,
+            coinCount: null,
+            favoriteCount: null,
+            danmakuCount: null,
+            followerCount: null
+          },
+          cover: { url: null },
+          card: {
+            track: "",
+            humanNote: "",
+            status: "",
+            baselinePlayCount: null,
+            relativeToBaseline: null,
+            viewsPerFollower: null
+          },
+          analysis: null
+        }
+      ]
+    };
+    const fetcher = vi.fn().mockResolvedValueOnce(jsonResponse(snapshot));
+
+    const result = await loadSnapshot(fetcher);
+
+    expect(result.payload.samples[0].analysis?.performance.bucket).toBe("steady");
+    expect(result.payload.samples[1].analysis).toBeNull();
+  });
 });

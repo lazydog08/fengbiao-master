@@ -2,6 +2,7 @@ import { useEffect, useRef, type KeyboardEvent } from "react";
 import { Copy, ExternalLink, Star, X } from "lucide-react";
 import { PerformanceBadge, PlatformBadge, TagList } from "./Badges";
 import { assetUrl } from "../lib/assets";
+import { getPerformanceBucket } from "../lib/buckets";
 import { formatCount, formatDate, formatRatio } from "../lib/format";
 import type { Sample } from "../types";
 
@@ -35,6 +36,10 @@ export function DetailDrawer({ sample, favorite, onClose, onToggleFavorite }: De
   }
 
   const coverUrl = assetUrl(sample.cover.url);
+  const analysis = completeV1Analysis(sample.analysis);
+  const bucket = getPerformanceBucket(sample.card.relativeToBaseline);
+  const analysisFeatures = analysis?.title.features.filter((feature) => feature.present) ?? [];
+  const needsCaution = analysis?.performance.confidence === "low" || bucket.id === "unknown";
 
   function copyTitle() {
     if (!sample) {
@@ -128,8 +133,54 @@ export function DetailDrawer({ sample, favorite, onClose, onToggleFavorite }: De
             </div>
           </dl>
 
+          {analysis ? (
+            <>
+              <section className="drawer-section">
+                <h3>封标结构</h3>
+                <p>{analysis.explanation.structure}</p>
+              </section>
+
+              <section className="drawer-section">
+                <h3>特征</h3>
+                {analysisFeatures.length > 0 ? (
+                  <div className="analysis-feature-list">
+                    {analysisFeatures.map((feature) => (
+                      <span className="analysis-chip" key={feature.id}>
+                        {feature.label}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="muted-note">暂未识别出明确的标题结构特征。</p>
+                )}
+                <p>{analysis.explanation.features}</p>
+                <p className="analysis-meta">{coverSummary(analysis.cover)}</p>
+              </section>
+
+              <section className="drawer-section">
+                <h3>表现判断</h3>
+                <p>
+                  {bucket.label}，当前库内相对表现为 {formatRatio(sample.card.relativeToBaseline)}。
+                  {needsCaution ? " 数据不足，仅供参考。" : ""}
+                </p>
+              </section>
+
+              <section className="drawer-section">
+                <h3>为什么可能高 / 一般 / 较差</h3>
+                <p>{analysis.explanation.interpretation}</p>
+                {analysis.caveats.length > 0 ? (
+                  <ul className="caveat-list">
+                    {analysis.caveats.map((caveat) => (
+                      <li key={caveat}>{caveat}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </section>
+            </>
+          ) : null}
+
           <section className="drawer-section">
-            <h3>可复用观察</h3>
+            <h3>人工备注</h3>
             <p>{sample.card.humanNote || sample.creator.note || "这条样本还没有人工备注，先从封面构图、标题钩子和数据表现里找相似题材。"}</p>
           </section>
 
@@ -155,4 +206,76 @@ export function DetailDrawer({ sample, favorite, onClose, onToggleFavorite }: De
       </aside>
     </div>
   );
+}
+
+function coverSummary(cover: NonNullable<Sample["analysis"]>["cover"]): string {
+  if (!cover.has_asset) {
+    return "封面文件暂不可读，当前分析以标题为主。";
+  }
+  const size = cover.width && cover.height ? `${cover.width}x${cover.height}` : "尺寸未知";
+  const ratio = cover.aspect_ratio == null ? "比例未知" : `比例 ${cover.aspect_ratio}`;
+  const changes = [
+    cover.cover_changed ? "封面有变更记录" : null,
+    cover.title_changed ? "标题有变更记录" : null,
+  ].filter(Boolean);
+  const changeText = changes.length > 0 ? `，${changes.join("，")}` : "";
+  return `封面：${orientationLabel(cover.orientation)}，${size}，${ratio}${changeText}。`;
+}
+
+function orientationLabel(orientation: string): string {
+  if (orientation === "landscape") {
+    return "横版";
+  }
+  if (orientation === "portrait") {
+    return "竖版";
+  }
+  if (orientation === "square") {
+    return "近方形";
+  }
+  return "未知方向";
+}
+
+function completeV1Analysis(analysis: Sample["analysis"]): NonNullable<Sample["analysis"]> | null {
+  if (!isRecord(analysis) || analysis.version !== 1) {
+    return null;
+  }
+  if (!isRecord(analysis.performance) || typeof analysis.performance.confidence !== "string") {
+    return null;
+  }
+  if (!isRecord(analysis.title) || !Array.isArray(analysis.title.features)) {
+    return null;
+  }
+  if (!analysis.title.features.every(isAnalysisFeature)) {
+    return null;
+  }
+  if (!isRecord(analysis.cover) || typeof analysis.cover.has_asset !== "boolean") {
+    return null;
+  }
+  if (!isRecord(analysis.explanation)) {
+    return null;
+  }
+  if (
+    typeof analysis.explanation.structure !== "string" ||
+    typeof analysis.explanation.features !== "string" ||
+    typeof analysis.explanation.interpretation !== "string"
+  ) {
+    return null;
+  }
+  if (!Array.isArray(analysis.caveats) || !analysis.caveats.every((caveat) => typeof caveat === "string")) {
+    return null;
+  }
+  return analysis;
+}
+
+function isAnalysisFeature(feature: unknown): feature is NonNullable<Sample["analysis"]>["title"]["features"][number] {
+  return (
+    isRecord(feature) &&
+    typeof feature.id === "string" &&
+    typeof feature.label === "string" &&
+    typeof feature.present === "boolean"
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
 }

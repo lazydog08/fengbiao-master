@@ -76,8 +76,8 @@ def load_creators(path: str | Path = "config/creators.json") -> list[CreatorConf
                 bili_mid=str(item["bili_mid"]) if item.get("bili_mid") else None,
                 yt_channel_id=item.get("yt_channel_id"),
                 max_recent=item.get("max_recent"),
-                landscape_only=bool(item.get("landscape_only", False)),
-                min_cover_aspect_ratio=float(item.get("min_cover_aspect_ratio", 1.6)),
+                landscape_only=_landscape_only(item),
+                min_cover_aspect_ratio=_min_cover_aspect_ratio(item),
             )
         )
     return creators
@@ -99,3 +99,17 @@ def _deep_update(target: dict[str, Any], incoming: dict[str, Any]) -> None:
             _deep_update(target[key], value)
         else:
             target[key] = value
+
+
+def _min_cover_aspect_ratio(item: dict[str, Any]) -> float:
+    if item.get("min_cover_aspect_ratio") is not None:
+        return float(item["min_cover_aspect_ratio"])
+    if str(item.get("platform", "")).lower() == "bilibili":
+        return 1.0
+    return 1.6
+
+
+def _landscape_only(item: dict[str, Any]) -> bool:
+    if item.get("landscape_only") is not None:
+        return bool(item["landscape_only"])
+    return str(item.get("platform", "")).lower() in {"bilibili", "youtube"}
