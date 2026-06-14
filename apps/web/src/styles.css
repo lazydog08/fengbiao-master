@@ -48,6 +48,18 @@ button {
   outline-offset: 2px;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ---------- App shell: left video-type nav + main ---------- */
 
 .app-shell {
@@ -647,6 +659,25 @@ button {
   color: var(--muted);
   font-size: 11px;
   font-weight: 700;
+}
+
+.drawer-source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--ink-soft);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.drawer-source-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .drawer-body h2 {

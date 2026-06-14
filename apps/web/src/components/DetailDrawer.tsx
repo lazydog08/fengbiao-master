@@ -40,6 +40,7 @@ export function DetailDrawer({ sample, favorite, onClose, onToggleFavorite }: De
   const bucket = getPerformanceBucket(sample.card.relativeToBaseline);
   const analysisFeatures = analysis?.title.features.filter((feature) => feature.present) ?? [];
   const needsCaution = analysis?.performance.confidence === "low" || bucket.id === "unknown";
+  const originalVideoUrl = safeExternalUrl(sample.url);
 
   function copyTitle() {
     if (!sample) {
@@ -80,9 +81,11 @@ export function DetailDrawer({ sample, favorite, onClose, onToggleFavorite }: De
           <button className="icon-button" type="button" onClick={copyTitle} title="复制标题" aria-label="复制标题">
             <Copy size={18} />
           </button>
-          <a className="icon-button" href={sample.url} target="_blank" rel="noreferrer" title="打开原视频" aria-label="打开原视频">
-            <ExternalLink size={18} />
-          </a>
+          {originalVideoUrl ? (
+            <a className="icon-button" href={originalVideoUrl} target="_blank" rel="noreferrer" title="快捷打开原视频" aria-label="快捷打开原视频，新标签页打开">
+              <ExternalLink size={18} aria-hidden="true" />
+            </a>
+          ) : null}
           <button ref={closeButtonRef} className="icon-button" type="button" onClick={onClose} title="关闭" aria-label="关闭">
             <X size={18} />
           </button>
@@ -110,6 +113,13 @@ export function DetailDrawer({ sample, favorite, onClose, onToggleFavorite }: De
               <PerformanceBadge sample={sample} />
             </div>
           </div>
+          {originalVideoUrl ? (
+            <a className="drawer-source-link" href={originalVideoUrl} target="_blank" rel="noreferrer">
+              <ExternalLink size={16} aria-hidden="true" />
+              <span>打开原视频</span>
+              <span className="sr-only">（新标签页打开）</span>
+            </a>
+          ) : null}
           <h2>{sample.title}</h2>
           <p className="creator-line">{sample.creator.name}</p>
           <TagList tags={sample.creator.tags} />
@@ -233,6 +243,22 @@ function orientationLabel(orientation: string): string {
     return "近方形";
   }
   return "未知方向";
+}
+
+function safeExternalUrl(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+  try {
+    const url = new URL(trimmed);
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return null;
+    }
+    return url.href;
+  } catch {
+    return null;
+  }
 }
 
 function completeV1Analysis(analysis: Sample["analysis"]): NonNullable<Sample["analysis"]> | null {

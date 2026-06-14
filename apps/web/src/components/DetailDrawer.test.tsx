@@ -84,6 +84,14 @@ describe("DetailDrawer", () => {
     expect(html).toContain("数据不足，仅供参考");
     expect(html).toContain("人工备注");
     expect(html).toContain("人工判断优先展示");
+    const sourceLink = extractSourceLink(html);
+    expect(sourceLink).toContain("<span>打开原视频</span>");
+    expect(sourceLink).toContain('class="drawer-source-link"');
+    expect(sourceLink).toContain('href="https://www.bilibili.com/video/BV1"');
+    expect(sourceLink).toContain('target="_blank"');
+    expect(sourceLink).toContain('rel="noreferrer"');
+    expect(sourceLink).toContain('class="sr-only"');
+    expect(html).toContain('aria-label="快捷打开原视频，新标签页打开"');
   });
 
   it("keeps rendering core details when analysis is partial or invalid", () => {
@@ -113,4 +121,44 @@ describe("DetailDrawer", () => {
     expect(html).toContain("收录信息");
     expect(html).toContain("智能眼镜这次能当主力屏幕吗？");
   });
+
+  it("hides original-video links when the sample url is empty", () => {
+    const sampleWithoutUrl: Sample = { ...sample, url: "" };
+
+    const html = renderToStaticMarkup(
+      <DetailDrawer
+        sample={sampleWithoutUrl}
+        favorite={false}
+        onClose={vi.fn()}
+        onToggleFavorite={vi.fn()}
+      />,
+    );
+
+    expect(html).not.toContain('class="drawer-source-link"');
+    expect(html).not.toContain('href=""');
+    expect(html).toContain("智能眼镜这次能当主力屏幕吗？");
+  });
+
+  it("hides original-video links when the sample url uses an unsafe scheme", () => {
+    const sampleWithUnsafeUrl: Sample = { ...sample, url: "javascript:alert(1)" };
+
+    const html = renderToStaticMarkup(
+      <DetailDrawer
+        sample={sampleWithUnsafeUrl}
+        favorite={false}
+        onClose={vi.fn()}
+        onToggleFavorite={vi.fn()}
+      />,
+    );
+
+    expect(html).not.toContain('class="drawer-source-link"');
+    expect(html).not.toContain("javascript:alert");
+    expect(html).toContain("智能眼镜这次能当主力屏幕吗？");
+  });
 });
+
+function extractSourceLink(html: string): string {
+  const match = html.match(/<a class="drawer-source-link"[^>]*>.*?<\/a>/);
+  expect(match).not.toBeNull();
+  return match?.[0] ?? "";
+}
