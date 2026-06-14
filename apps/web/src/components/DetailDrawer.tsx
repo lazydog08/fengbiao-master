@@ -41,6 +41,7 @@ export function DetailDrawer({ sample, favorite, onClose, onToggleFavorite }: De
   const analysisFeatures = analysis?.title.features.filter((feature) => feature.present) ?? [];
   const needsCaution = analysis?.performance.confidence === "low" || bucket.id === "unknown";
   const originalVideoUrl = safeExternalUrl(sample.url);
+  const coverAlt = `${sample.creator.name}《${sample.title}》封面大图`;
 
   function copyTitle() {
     if (!sample) {
@@ -93,7 +94,17 @@ export function DetailDrawer({ sample, favorite, onClose, onToggleFavorite }: De
 
         <div className="drawer-cover">
           {coverUrl ? (
-            <img src={coverUrl} alt={`${sample.creator.name}《${sample.title}》封面大图`} />
+            originalVideoUrl ? (
+              <a className="drawer-cover-link" href={originalVideoUrl} target="_blank" rel="noreferrer" aria-label={`打开《${sample.title}》原视频，新标签页打开`}>
+                <img src={coverUrl} alt={coverAlt} />
+                <span className="drawer-cover-link-badge" aria-hidden="true">
+                  <ExternalLink size={15} aria-hidden="true" />
+                  <span>点击封面打开原视频</span>
+                </span>
+              </a>
+            ) : (
+              <img src={coverUrl} alt={coverAlt} />
+            )
           ) : (
             <div className="cover-missing large">
               <span>{sample.platform}</span>
@@ -113,13 +124,6 @@ export function DetailDrawer({ sample, favorite, onClose, onToggleFavorite }: De
               <PerformanceBadge sample={sample} />
             </div>
           </div>
-          {originalVideoUrl ? (
-            <a className="drawer-source-link" href={originalVideoUrl} target="_blank" rel="noreferrer">
-              <ExternalLink size={16} aria-hidden="true" />
-              <span>打开原视频</span>
-              <span className="sr-only">（新标签页打开）</span>
-            </a>
-          ) : null}
           <h2>{sample.title}</h2>
           <p className="creator-line">{sample.creator.name}</p>
           <TagList tags={sample.creator.tags} />

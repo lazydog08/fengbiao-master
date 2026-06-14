@@ -84,13 +84,16 @@ describe("DetailDrawer", () => {
     expect(html).toContain("数据不足，仅供参考");
     expect(html).toContain("人工备注");
     expect(html).toContain("人工判断优先展示");
-    const sourceLink = extractSourceLink(html);
-    expect(sourceLink).toContain("<span>打开原视频</span>");
-    expect(sourceLink).toContain('class="drawer-source-link"');
-    expect(sourceLink).toContain('href="https://www.bilibili.com/video/BV1"');
-    expect(sourceLink).toContain('target="_blank"');
-    expect(sourceLink).toContain('rel="noreferrer"');
-    expect(sourceLink).toContain('class="sr-only"');
+    const coverLink = extractCoverLink(html);
+    expect(coverLink).toContain('class="drawer-cover-link"');
+    expect(coverLink).toContain('href="https://www.bilibili.com/video/BV1"');
+    expect(coverLink).toContain('target="_blank"');
+    expect(coverLink).toContain('rel="noreferrer"');
+    expect(coverLink).toContain('aria-label="打开《智能眼镜这次能当主力屏幕吗？》原视频，新标签页打开"');
+    expect(coverLink).toContain('alt="懒狗小黑《智能眼镜这次能当主力屏幕吗？》封面大图"');
+    expect(coverLink).toContain("点击封面打开原视频");
+    expect(coverLink).toContain('aria-hidden="true"');
+    expect(html).not.toContain('class="drawer-source-link"');
     expect(html).toContain('aria-label="快捷打开原视频，新标签页打开"');
   });
 
@@ -135,7 +138,10 @@ describe("DetailDrawer", () => {
     );
 
     expect(html).not.toContain('class="drawer-source-link"');
+    expect(html).not.toContain('class="drawer-cover-link"');
+    expect(html).not.toContain("快捷打开原视频");
     expect(html).not.toContain('href=""');
+    expect(html).toContain('alt="懒狗小黑《智能眼镜这次能当主力屏幕吗？》封面大图"');
     expect(html).toContain("智能眼镜这次能当主力屏幕吗？");
   });
 
@@ -152,13 +158,33 @@ describe("DetailDrawer", () => {
     );
 
     expect(html).not.toContain('class="drawer-source-link"');
+    expect(html).not.toContain('class="drawer-cover-link"');
+    expect(html).not.toContain("快捷打开原视频");
     expect(html).not.toContain("javascript:alert");
     expect(html).toContain("智能眼镜这次能当主力屏幕吗？");
   });
+
+  it("does not turn the cover placeholder into a video link", () => {
+    const sampleWithoutCover: Sample = { ...sample, cover: { url: "" } };
+
+    const html = renderToStaticMarkup(
+      <DetailDrawer
+        sample={sampleWithoutCover}
+        favorite={false}
+        onClose={vi.fn()}
+        onToggleFavorite={vi.fn()}
+      />,
+    );
+
+    expect(html).toContain('class="cover-missing large"');
+    expect(html).not.toContain('class="drawer-cover-link"');
+    expect(html).not.toContain('class="drawer-source-link"');
+    expect(html).toContain('aria-label="快捷打开原视频，新标签页打开"');
+  });
 });
 
-function extractSourceLink(html: string): string {
-  const match = html.match(/<a class="drawer-source-link"[^>]*>.*?<\/a>/);
+function extractCoverLink(html: string): string {
+  const match = html.match(/<a class="drawer-cover-link"[^>]*>.*?<\/a>/);
   expect(match).not.toBeNull();
   return match?.[0] ?? "";
 }
