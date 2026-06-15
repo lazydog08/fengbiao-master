@@ -7,12 +7,52 @@ REMOTE="${FENGBIAO_GIT_REMOTE:-origin}"
 PAGES_BRANCH="${FENGBIAO_PAGES_BRANCH:-gh-pages}"
 COVER_MAX_PX="${FENGBIAO_COVER_MAX_PX:-640}"
 COVER_JPEG_QUALITY="${FENGBIAO_COVER_JPEG_QUALITY:-72}"
+ALLOW_SNAPSHOT_REGRESSION="${FENGBIAO_ALLOW_SNAPSHOT_REGRESSION:-0}"
+GIT_RETRY_ATTEMPTS="${FENGBIAO_GIT_RETRY_ATTEMPTS:-3}"
+GIT_RETRY_SLEEP_SEC="${FENGBIAO_GIT_RETRY_SLEEP_SEC:-5}"
 RUN_SYNC=0
 SYNC_RC=0
 export GIT_TERMINAL_PROMPT=0
 
 usage() {
   printf 'Usage: %s [--sync]\n' "$(basename "$0")"
+}
+
+git_retry() {
+  local attempt=1
+  local rc=0
+  while true; do
+    "$@"
+    rc=$?
+    if [[ "$rc" -eq 0 || "$attempt" -ge "$GIT_RETRY_ATTEMPTS" ]]; then
+      return "$rc"
+    fi
+    echo "git command failed with ${rc}; retry ${attempt}/${GIT_RETRY_ATTEMPTS}: $*" >&2
+    sleep "$GIT_RETRY_SLEEP_SEC"
+    attempt=$((attempt + 1))
+  done
+}
+
+guard_public_snapshot() {
+  local candidate="$1"
+  shift
+  if [[ "$ALLOW_SNAPSHOT_REGRESSION" == "1" ]]; then
+    echo "snapshot regression guard bypassed by FENGBIAO_ALLOW_SNAPSHOT_REGRESSION=1" >&2
+    return 0
+  fi
+  PYTHONPATH="${ROOT}/src" "$PYTHON_BIN" - "$candidate" "$@" <<'PY'
+import sys
+
+from fengbiao.snapshot_guard import SnapshotRegressionError, guard_public_snapshot
+
+try:
+    metadata = guard_public_snapshot(sys.argv[1], sys.argv[2:])
+except SnapshotRegressionError as exc:
+    print(f"snapshot regression guard failed: {exc}", file=sys.stderr)
+    raise SystemExit(3)
+
+print(f"snapshot guard ok: samples={metadata.sample_count}")
+PY
 }
 
 while [[ $# -gt 0 ]]; do
@@ -80,7 +120,7 @@ test -d "${DIST}/covers"
 
 if [[ ! -d "$WORKTREE/.git" ]]; then
   if git ls-remote --exit-code --heads "$REMOTE" "$PAGES_BRANCH" >/dev/null 2>&1; then
-    git clone --depth 1 --branch "$PAGES_BRANCH" "$remote_url" "$WORKTREE"
+    git_retry git clone --depth 1 --branch "$PAGES_BRANCH" "$remote_url" "$WORKTREE"
   else
     mkdir -p "$WORKTREE"
     git -C "$WORKTREE" init
@@ -91,10 +131,25 @@ else
   if ! git -C "$WORKTREE" remote get-url "$REMOTE" >/dev/null 2>&1; then
     git -C "$WORKTREE" remote add "$REMOTE" "$remote_url"
   fi
-  git -C "$WORKTREE" fetch "$REMOTE" "$PAGES_BRANCH" || true
+  git_retry git -C "$WORKTREE" fetch "$REMOTE" "$PAGES_BRANCH" || true
   git -C "$WORKTREE" checkout "$PAGES_BRANCH"
-  git -C "$WORKTREE" pull --ff-only "$REMOTE" "$PAGES_BRANCH" || true
+  if git -C "$WORKTREE" rev-parse --verify "${REMOTE}/${PAGES_BRANCH}" >/dev/null 2>&1; then
+    git -C "$WORKTREE" reset --hard "${REMOTE}/${PAGES_BRANCH}"
+  else
+    git_retry git -C "$WORKTREE" pull --ff-only "$REMOTE" "$PAGES_BRANCH" || true
+  fi
 fi
+
+BASELINE_DIR="$(mktemp -d)"
+trap 'rm -rf "$BASELINE_DIR"' EXIT
+BASELINE_FILES=()
+if git -C "$WORKTREE" show "${REMOTE}/${PAGES_BRANCH}:fengbiao-snapshot.json" > "${BASELINE_DIR}/remote-snapshot.json" 2>/dev/null; then
+  BASELINE_FILES+=("${BASELINE_DIR}/remote-snapshot.json")
+fi
+if [[ -f "${WORKTREE}/fengbiao-snapshot.json" ]]; then
+  BASELINE_FILES+=("${WORKTREE}/fengbiao-snapshot.json")
+fi
+guard_public_snapshot "${DIST}/fengbiao-snapshot.json" "${BASELINE_FILES[@]}"
 
 find "$WORKTREE" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
 cp -R "${DIST}/." "$WORKTREE/"
@@ -105,7 +160,7 @@ if git -C "$WORKTREE" diff --cached --quiet; then
   echo "gh-pages unchanged"
 else
   git -C "$WORKTREE" commit -m "deploy: update fengbiao pages snapshot"
-  git -C "$WORKTREE" push -u "$REMOTE" "$PAGES_BRANCH"
+  git_retry git -C "$WORKTREE" push -u "$REMOTE" "$PAGES_BRANCH"
 fi
 
 echo "published_base=${PAGES_BASE}"

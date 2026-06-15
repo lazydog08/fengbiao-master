@@ -48,19 +48,19 @@ else
 fi
 
 mkdir -p "${RUNTIME_ROOT}/data/db" "${RUNTIME_ROOT}/data/covers"
-if [[ -f "${ROOT}/data/db/fengbiao.sqlite3" ]]; then
-  if [[ ! -f "${RUNTIME_ROOT}/data/db/fengbiao.sqlite3" || "$SEED_RUNTIME_DATA" == "1" ]]; then
-    if [[ -f "${RUNTIME_ROOT}/data/db/fengbiao.sqlite3" ]]; then
-      cp -p "${RUNTIME_ROOT}/data/db/fengbiao.sqlite3" "${RUNTIME_ROOT}/data/db/fengbiao.sqlite3.backup.$(date -u +%Y%m%dT%H%M%SZ)"
-    fi
-    cp -p "${ROOT}/data/db/fengbiao.sqlite3" "${RUNTIME_ROOT}/data/db/fengbiao.sqlite3"
-  fi
-fi
-if [[ -d "${ROOT}/data/covers" ]]; then
-  rsync -a --ignore-existing "${ROOT}/data/covers/" "${RUNTIME_ROOT}/data/covers/"
-fi
+PYTHONPATH="${ROOT}/src" python3 - "$ROOT" "$RUNTIME_ROOT" "$SEED_RUNTIME_DATA" <<'PY'
+import json
+import sys
+
+from fengbiao.runtime_data import sync_runtime_data
+
+result = sync_runtime_data(sys.argv[1], sys.argv[2], force=sys.argv[3] == "1")
+print(json.dumps({"runtimeDataSync": result}, ensure_ascii=False, sort_keys=True))
+PY
 
 cp "$SOURCE" "$TARGET"
+/usr/libexec/PlistBuddy -c "Set :EnvironmentVariables:FENGBIAO_CANONICAL_DATA_ROOT ${ROOT}" "$TARGET" >/dev/null 2>&1 \
+  || /usr/libexec/PlistBuddy -c "Add :EnvironmentVariables:FENGBIAO_CANONICAL_DATA_ROOT string ${ROOT}" "$TARGET" >/dev/null
 
 launchctl bootout "gui/${UID_VALUE}" "$TARGET" >/dev/null 2>&1 || true
 launchctl bootstrap "gui/${UID_VALUE}" "$TARGET"
