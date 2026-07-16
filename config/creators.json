@@ -22,6 +22,7 @@
     {"platform": "youtube", "name": "MKBHD", "yt_channel_id": "UCBJycsmduvYEL83R_U4JriQ", "tags": ["tech", "review", "thumbnail"], "note": "clean tech thumbnail system", "landscape_only": true, "min_cover_aspect_ratio": 1.6},
     {"platform": "youtube", "name": "Mrwhosetheboss", "yt_channel_id": "UCMiJRAwDNSNzuYeN2uWa0pA", "tags": ["tech", "review", "thumbnail"], "note": "high-contrast packaging and clear stakes", "landscape_only": true, "min_cover_aspect_ratio": 1.6},
     {"platform": "youtube", "name": "Dave2D", "yt_channel_id": "UCVYamHliCI9rw1tHR1xbkfw", "tags": ["tech", "review", "thumbnail"], "note": "minimal composition and product clarity", "landscape_only": true, "min_cover_aspect_ratio": 1.6},
-    {"platform": "youtube", "name": "Linus Tech Tips", "yt_channel_id": "UCXuqSBlHAE6Xw-yeJA0Tunw", "tags": ["tech", "hardware", "thumbnail"], "note": "large-scale tech packaging reference", "landscape_only": true, "min_cover_aspect_ratio": 1.6}
+    {"platform": "youtube", "name": "Linus Tech Tips", "yt_channel_id": "UCXuqSBlHAE6Xw-yeJA0Tunw", "tags": ["tech", "hardware", "thumbnail"], "note": "large-scale tech packaging reference", "landscape_only": true, "min_cover_aspect_ratio": 1.6},
+    {"platform": "youtube", "name": "¿Y si?", "yt_channel_id": "UC8P-Aw58BGOzZ-IhU6-aMgw", "handle": "@ysioficial", "url": "https://www.youtube.com/@ysioficial", "tags": ["education", "science", "history", "curiosity", "thumbnail"], "note": "handle @ysioficial; source https://www.youtube.com/@ysioficial", "landscape_only": true, "min_cover_aspect_ratio": 1.6}
   ]
 }

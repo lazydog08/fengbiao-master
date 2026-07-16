@@ -33,6 +33,8 @@ def parse_ytdlp_lines(lines: list[str], channel_id: str, cutoff: datetime) -> li
 
 
 def parse_flat_playlist(payload: dict) -> list[dict[str, Any]]:
+    if not isinstance(payload, dict):
+        return []
     entries = payload.get("entries") or []
     result: list[dict[str, Any]] = []
     seen = set()
@@ -147,6 +149,9 @@ def _fetch_flat_playlist(executable: str, channel_id: str, timeout: int, playlis
         payload = json.loads(completed.stdout)
     except json.JSONDecodeError:
         return [], "yt-dlp flat playlist returned invalid JSON"
+    if not isinstance(payload, dict):
+        message = (completed.stderr or "yt-dlp flat playlist returned no JSON object").strip()
+        return [], message
     return parse_flat_playlist(payload), None
 
 

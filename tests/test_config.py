@@ -23,6 +23,8 @@ class ConfigTests(unittest.TestCase):
                                 "platform": "youtube",
                                 "name": "MKBHD",
                                 "yt_channel_id": "CHANNEL",
+                                "handle": "@mkbhd",
+                                "url": "https://www.youtube.com/@mkbhd",
                             },
                             {
                                 "platform": "bilibili",
@@ -43,6 +45,8 @@ class ConfigTests(unittest.TestCase):
             self.assertEqual(bilibili.min_cover_aspect_ratio, 1.0)
             self.assertTrue(youtube.landscape_only)
             self.assertEqual(youtube.min_cover_aspect_ratio, 1.6)
+            self.assertEqual(youtube.handle, "@mkbhd")
+            self.assertEqual(youtube.url, "https://www.youtube.com/@mkbhd")
             self.assertFalse(vertical_exception.landscape_only)
 
 

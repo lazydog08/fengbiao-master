@@ -178,7 +178,14 @@ def fetch_creator(config: CreatorConfig, settings: dict[str, Any], max_recent: i
     else:
         raise ValueError(f"unsupported platform: {config.platform}")
 
-    creator = replace(creator, tags=config.tags, note=config.note, active=config.active, max_recent=config.max_recent)
+    creator = replace(
+        creator,
+        url=config.url or creator.url,
+        tags=config.tags,
+        note=config.note,
+        active=config.active,
+        max_recent=config.max_recent,
+    )
     return creator, videos, source_url
 
 
@@ -241,7 +248,18 @@ def fetch_backfill_creator(config: CreatorConfig, settings: dict[str, Any], cuto
         source_url = f"https://www.youtube.com/channel/{config.yt_channel_id}/videos"
     else:
         raise ValueError(f"unsupported platform: {config.platform}")
-    return replace(creator, tags=config.tags, note=config.note, active=config.active, max_recent=config.max_recent), videos, source_url
+    return (
+        replace(
+            creator,
+            url=config.url or creator.url,
+            tags=config.tags,
+            note=config.note,
+            active=config.active,
+            max_recent=config.max_recent,
+        ),
+        videos,
+        source_url,
+    )
 
 
 def _persist_videos(

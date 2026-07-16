@@ -53,6 +53,8 @@ class CreatorConfig:
     active: bool = True
     bili_mid: str | None = None
     yt_channel_id: str | None = None
+    handle: str | None = None
+    url: str | None = None
     max_recent: int | None = None
     landscape_only: bool = False
     min_cover_aspect_ratio: float = 1.6
@@ -75,6 +77,8 @@ def load_creators(path: str | Path = "config/creators.json") -> list[CreatorConf
                 active=bool(item.get("active", True)),
                 bili_mid=str(item["bili_mid"]) if item.get("bili_mid") else None,
                 yt_channel_id=item.get("yt_channel_id"),
+                handle=item.get("handle"),
+                url=item.get("url"),
                 max_recent=item.get("max_recent"),
                 landscape_only=_landscape_only(item),
                 min_cover_aspect_ratio=_min_cover_aspect_ratio(item),

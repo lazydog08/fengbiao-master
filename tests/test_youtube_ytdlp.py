@@ -41,6 +41,9 @@ class YouTubeYtDlpTests(unittest.TestCase):
 
         self.assertEqual([entry["id"] for entry in entries], ["a", "b"])
 
+    def test_parse_flat_playlist_handles_non_object_payload(self):
+        self.assertEqual(parse_flat_playlist(None), [])
+
     def test_parse_watch_player_response_maps_public_metadata(self):
         payload = {
             "videoDetails": {
